@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const authenticateUser = require("../../middlewares/userAuthenticationMiddleware");
 
 const { body } = require("express-validator");
 
@@ -34,5 +35,15 @@ router.post("/api/users/signup", [
 ],
  userController.signUpUser);
 
-router.post("/api/users/forgotPassword",userController.passWordResetUser)
+router.post('/api/users/verify-otp',userController.verifyOtp)
+
+router.post("/api/users/forgot-password",userController.passWordResetUser)
+router.post('/api/users/request-otp',userController.requestOtp)
+router.post('/api/users/edit-profile',userController.editProfile)
+router.post('/api/users/update-profile-pic',userController.updateProfilePic)
+router.post('/api/users/add-address',userController.addUserAddress)
+router.get('/api/users/list-address/:email',userController.listAddress)
+router.post('/api/users/edit-address/:addressId',authenticateUser,userController.editAddress)
+router.delete('/api/users/delete-address/:addressId',authenticateUser,userController.deleteAddress)
+router.post('/api/users/change-password',authenticateUser,userController.changePassword)
 module.exports = router;

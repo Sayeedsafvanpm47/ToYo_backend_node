@@ -19,4 +19,13 @@ const updateStock = async (id,stock)=>{
     return productRepository.updateStock(id,stock)
 }
 
-module.exports = {createProduct,editProduct,disableProduct,updateStock}
+const featureProduct = async (id)=>{
+    return productRepository.featureProduct(id)
+}
+
+const addDiscount = async (id,discount)=>{
+return productRepository.addDiscount(id,discount)
+}
+
+
+module.exports = {createProduct,editProduct,disableProduct,updateStock, featureProduct, addDiscount}

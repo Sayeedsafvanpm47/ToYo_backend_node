@@ -14,8 +14,8 @@ const getAllProducts = async ()=>{
     return productRepository.getAllProducts()
 }
 
-const sortByCategory = async (category)=>{
-    return productRepository.sortByCategory(category)
+const sortByCategory = async (id)=>{
+    return productRepository.sortByCategory(id)
 } 
 
 const sortByPrice = async (details)=>{
@@ -26,4 +26,9 @@ const checkStock = async (id)=>{
     return productRepository.checkStock(id)
 }
 
-module.exports = {findProduct,searchProduct,getAllProducts,sortByCategory,sortByPrice,checkStock}
+const showFeaturedProducts = async ()=>{
+    return productRepository.showFeaturedProducts()
+}
+
+
+module.exports = {findProduct,searchProduct,getAllProducts,sortByCategory,sortByPrice,checkStock, showFeaturedProducts}

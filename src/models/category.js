@@ -10,7 +10,11 @@ CategorySchema = new Schema({
 	},
 	description: {
 		type: String
-	}
+	},
+    disabled : {
+        type : Boolean,
+        default: false
+    }
 },{ timestamps: true });
 
 // Create and export the User model

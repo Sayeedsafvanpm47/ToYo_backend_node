@@ -42,7 +42,25 @@ const updateStock = async (req,res)=>{
     }
 }
 
+const featureProduct = async (req,res)=>{  
+    try {
+        const product = await productService.featureProduct(req.params.id)
+        res.status(201).send(product)
+    } catch (error) {
+        res.status(500).send(error)
+    }
+}
+
+const addDiscount = async (req,res)=>{
+    try {
+        const discount = req.body.discount
+        const products = await productService.addDiscount(req.params.id,discount)
+        res.status(201).send(products)
+    } catch (error) {
+        res.status(500).send(error)
+    }
+}
 
 module.exports = {
-createProduct,editProduct,disableProduct,updateStock
+createProduct,editProduct,disableProduct,updateStock, featureProduct, addDiscount
 }

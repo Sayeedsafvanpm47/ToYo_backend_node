@@ -33,7 +33,7 @@ const searchProduct = async (req,res)=>{
 
 const sortByCategory = async (req,res)=>{
    try {
-       const products = await productService.sortByCategory(req.params.category)
+       const products = await productService.sortByCategory(req.params.id)
        res.status(200).send(products)
    } catch (error) {
        res.status(500).send(error)
@@ -57,6 +57,15 @@ const checkStock = async (req,res)=>{
         res.status(500).send(error)
     }
 }
+
+showFeaturedProducts = async (req,res)=>{
+    try {
+        const products = await productService.showFeaturedProducts()
+        res.status(200).send(products)
+    } catch (error) {
+        res.status(500).send(error)
+    }
+}
 module.exports = {
-    findProduct,searchProduct,getAllProducts,sortByCategory,sortByPrice,checkStock
+    findProduct,searchProduct,getAllProducts,sortByCategory,sortByPrice,checkStock, showFeaturedProducts
 }

@@ -62,6 +62,29 @@ const updateStock = async (id,stock) => {
         return error 
     }
 }
+
+const featureProduct = async (id)=>{
+    try {
+        console.log(id,'id of product in repo')
+        const product = await Product.findOne({_id:id})
+        product.featured = !product.featured
+        await product.save()
+        return product
+    } catch (error) {   
+        return error
+    }
+}
+
+const addDiscount = async (id,discount)=>{
+    try {
+        const product = await Product.findOne({_id:id})
+        product.product_discount = discount
+        await product.save()
+        return product
+    } catch (error) {
+        return error
+    }
+}
 module.exports = {
-   createProduct,editProduct,disableProduct,updateStock
+   createProduct,editProduct,disableProduct,updateStock, featureProduct, addDiscount
 }

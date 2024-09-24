@@ -1,3 +1,4 @@
+const { ObjectId } = require('mongodb');
 const Product = require('../../models/product')
 
 
@@ -21,26 +22,24 @@ const getAllProducts = async ()=>{
     return products
 }
 
-const sortByCategory = async (category) => {
+const sortByCategory = async (id) => {
+ try {
     const products = await Product.aggregate([
         {
             $lookup: {
-                from: 'categories', /*  */
+                from: 'categories',
                 localField: 'category',
                 foreignField: '_id',
                 as: 'categoryDetails'
             }
         },
-        {
-            $unwind: '$categoryDetails' 
-        },
-        {
-            $match: {
-                'categoryDetails.name': category
-            }
-        }
-    ]);
+        { $unwind: '$categoryDetails' },
+        { $match: { 'categoryDetails._id': new ObjectId(id) } }
+    ])
     return products;
+ } catch (error) {
+  console.log(error)  
+ }
 };
 
 
@@ -54,11 +53,25 @@ const checkStock = async (id)=>{
     const product = await Product.findOne({_id:id})
     if(product.stock>0)
     {
-        return true
+        return product.stock
     }
     return false
 
 }
+
+const showFeaturedProducts = async (req,res)=>{
+    try {
+        const products = await Product.aggregate([
+            { $match: { featured:  true  } },  
+            { $sample: { size: 10 } }        
+        ]);
+       return products
+    } catch (error) {
+        console.log(error)
+        return error 
+    }
+
+}
 module.exports = {
-    findProduct,searchProduct,getAllProducts,sortByCategory,sortByPrice,checkStock
+    findProduct,searchProduct,getAllProducts,sortByCategory,sortByPrice,checkStock,showFeaturedProducts
 }

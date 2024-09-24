@@ -1,4 +1,5 @@
 const userService = require("../../services/user-services/userService");
+
 const {
   encryptPassword,
   decryptPassword,
@@ -21,10 +22,10 @@ const signInUser = async (req, res, next) => {
       const userDetails = { ...checkUser._doc };
       delete userDetails.password;
       console.log(userDetails);
-      const userJWT = jwt.sign(userDetails, process.env.JWT_KEY);
-      // req.session = {
-      //   jwt : userJWT
-      // }
+      if(checkUser.blocked) throw new BadRequestError("User is blocked, contact admin for further details")
+      if(!checkUser.verified) throw new Error("User is not verified, please verify your email")
+       
+        const userJWT = jwt.sign(userDetails, process.env.JWT_KEY);
       res.cookie("jwt", userJWT, {
         httpOnly: true,
         secure: true,
@@ -78,98 +79,71 @@ const otpForUser = async (req, res) => {
   } catch (error) {}
 };
 
+//controller for otp verification 
+
+const verifyOtp = async (req,res)=>{
+  try {
+    await userService.verifyOtp(req.body.email,req.body.otp)
+    await userService.deleteOtp(req.body.email)
+    res.status(200).json({message:'Otp verified successfully'})
+    
+  } catch (error) {
+    res.json({errors:[error.message]})
+    console.log(error)
+  }
+}
+
 //controller for sign up
-// const signUpUser = async (req, res, next) => {
-//   try {
-//     const {
-//       email,
-//       password,
-//       username,
-//       firstname,
-//       lastname,
-//       talent,
-//       enteredOtp,
-//     } = req.body;
-//     // let otp;
-//     // const verifyOtp = await userService.findOtp(email);
-
-//     // if (verifyOtp) {
-//     //   otp = verifyOtp.otp;
-//     // } else {
-//     //   throw new BadRequestError("Confirm the email in which the otp was sent!");
-//     // }
-
-//     const emailExist = await userService.findUser(email);
-
-//     if (emailExist) {
-//       throw new BadRequestError("Email already exists");
-//     }
-
-//     const encryptedPassword = await encryptPassword(password);
-
-//     const signUpDetails = {
-//       email,
-//       password: encryptedPassword,
-//       username,
-//       firstname,
-//       lastname,
-//       talent,
-//     };
-
-//     // if (enteredOtp == otp) {
-//       const newUser = await userService.signUpUser(signUpDetails);
-
-//       const userDetails = { ...newUser._doc };
-//       delete userDetails.password;
-
-//       const userJWT = jwt.sign(userDetails, process.env.JWT_KEY);
-//       // req.session = {
-//       //   jwt: userJWT
-//       // };
-//       res.cookie("jwt", userJWT, {
-//         httpOnly: true,
-//         secure: true,
-//         sameSite: "none",
-//         path: "/",
-//         expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-//       });
-//       await userService.deleteOtp(email)
-//       return res.status(201).json({
-//         message: "Otp Verification success, user registered successfully",
-//         data: userDetails,
-//       });
-//     // } else {
-//     //   throw new BadRequestError("Otp verification failed!");
-//     // }
-//   } catch (error) {
-//     if (error instanceof BadRequestError) {
-//       return res.status(400).json({ errors: [error.message] });
-//     } else {
-//       console.error("Unexpected error:", error);
-//       return res.status(500).json({ errors: ["An unexpected error occurred"] });
-//     }
-//   }
-// };
 
 const signUpUser = async (req,res,next)=>{
     try {
-        const {email,password} = req.body 
+       const signupDetails = await userService.signUpUser(req.body)
+       console.log(signupDetails,'signup')
+                  let email = signupDetails.email
+                  const generatedOtp = await generateOtp()
+                  await userService.createOtp(email,generatedOtp)
+                  const userDetails = { 
+                    ...signupDetails._doc,
+                    _id: signupDetails._id.toString() // Convert ObjectId to string
+                  };
+                  
+                  delete userDetails.password
+                  const userJWT = jwt.sign(userDetails, process.env.JWT_KEY);
+            
+                res.cookie("jwt", userJWT, {
+                  httpOnly: true,
+                  secure: true,
+                  sameSite: "none",
+                  path: "/",
+                  expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+                });
 
-        const signUpDetails = {
-                  email,
-                  password,
-                
-                };
-                const newUser = await userService.signUpUser(signUpDetails);
-                const userDetails = { ...newUser._doc };
                 return res.status(201).json({
-                            message: "Otp Verification success, user registered successfully",
-                            data: userDetails,
+                            message: "Otp Verification pending, user registered successfully",
+                            data: signupDetails,
                           });
 
     } catch (error) {
         console.log(error)
     }
+}
+
+const requestOtp = async (req,res)=>{
+  try {
+    const email = req.body.email 
+    const otp = await generateOtp()
+    const findOtp = await userService.findOtp(email)
+    if(findOtp){
+      await userService.updateOtp(email,otp)
+    }else
+    {
+      await userService.createOtp(email,otp)
+    }
+    return res.json({message:'otp generated',otp})
+  } catch (error) {
+    console.log(error)
+    return res.json({errors:[error.message]})
+  }
 }
 
 const passWordResetUser = async (req, res) => {
@@ -206,11 +180,95 @@ const passWordResetUser = async (req, res) => {
   }
 };
 
+const editProfile = async (req,res)=>{
+  try {
+
+    const user = await userService.editProfile(req.body)
+   
+      return res.json({message:'Profile updated successfully',data:user})
+  
+  } catch (error) {
+    console.log(error)
+    return res.json({errors:[error.message]})
+  }
+}
+
+
+const updateProfilePic = async (req,res)=>{
+  try {
+    const picture = await userService.updateProfilePic(req.body.email,req.body.image)
+    return res.json({message:'Profile pic updated successfully',data:picture})
+  } catch (error) {
+    return res.json({errors:[error.message]})
+  }
+}
+
+const addUserAddress = async (req,res)=>{
+  try {
+    const user = await userService.addUserAddress(req.body.email,req.body.address)
+    return res.json({message:'Address added successfully',data:user})
+  } catch (error) {
+    return res.json({errors:[error.message]})
+  }
+}
+const listAddress = async (req,res)=>{
+
+  try {
+    const address = await userService.listAddress(req.params.email)
+    return res.status(200).json(address)  
+  
+  } catch (error) {
+    return res.status(500).json({message:"Some error occured"})
+  }
+  }
+
+const editAddress = async (req,res)=>{
+try {
+  const addressId = req.params.addressId 
+  const email = req.user.email 
+await userService.editAddress(email,addressId,req.body)
+return res.json({message:'Address updated successfully'})
+} catch (error) {
+  return res.json({errors:[error.message]})
+}
+}
+
+const deleteAddress = async (req,res)=>{
+try {
+  const email = req.user.email
+  const addressId = req.params.addressId
+  await userService.deleteAddress(email,addressId)
+  return res.json({message:'Address deleted successfully'})
+} catch (error) {
+  return res.json({errors:[error.message]})
+}
+}
+const changePassword = async (req,res)=>{
+  try {
+
+    const email = req.user.email 
+    const {oldPassword,newPassword,confirmPassword} = req.body 
+    await userService.changePassword(email,oldPassword,newPassword,confirmPassword)
+    return res.json({message:'Password changed successfully'})
+    
+  } catch (error) {
+    return res.json({errors:[error.message]}) 
+  }
+}
 
 module.exports = {
   signInUser,
   signOutUser,
   signUpUser,
   otpForUser,
-  passWordResetUser
+  passWordResetUser,
+  verifyOtp,
+  requestOtp,
+  editProfile,
+  updateProfilePic,
+  addUserAddress,
+  listAddress,
+  editAddress,
+  deleteAddress,
+  changePassword
 };

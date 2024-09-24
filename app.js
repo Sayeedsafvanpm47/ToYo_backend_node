@@ -3,11 +3,16 @@ const app = express();
 require("express-async-errors");
 const userRouter = require("./src/routes/user-routes/userRouter");
 const productRouter = require('./src/routes/user-routes/productRouter')
+const cartRouter = require('./src/routes/user-routes/cartRouter')
+const orderRouter = require('./src/routes/user-routes/orderRouter')
 const adminCategoryRouter = require('./src/routes/admin-routes/categoryRouter')
 const adminProductRouter = require('./src/routes/admin-routes/productRouter') 
+const adminUserRouter = require('./src/routes/admin-routes/userRouter')
+const adminOrderRouter = require('./src/routes/admin-routes/orderRouter')
 const cookieSession = require("cookie-session");
 const cookieParser = require('cookie-parser')
 const cors = require("cors");
+
 
 app.use(cookieParser())
 app.set("trust proxy", true);
@@ -42,10 +47,14 @@ app.use(
 //user routers
 app.use(userRouter);
 app.use(productRouter)
+app.use(cartRouter)
+app.use(orderRouter)
 
 //admin routers 
 app.use(adminCategoryRouter)
+app.use(adminUserRouter)
 app.use(adminProductRouter)
+app.use(adminOrderRouter)
 
 
 

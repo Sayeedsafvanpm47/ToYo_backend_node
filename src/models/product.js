@@ -9,9 +9,9 @@ const ProductSchema = new Schema({
     type: String,
     required:true
   },
-  price:{
-    type : Number,
-    required:true
+  mrp:{
+ type : Number,
+ required: true
   },
   stock:{
     type:Number,
@@ -44,6 +44,14 @@ const ProductSchema = new Schema({
  
 
 },{ timestamps: true });
+
+ProductSchema.virtual('price').get(function() {
+    const discount = this.product_discount || 0;
+    return this.mrp - (this.mrp * discount / 100);
+  });
+  
+  ProductSchema.set('toJSON', { virtuals: true });
+  ProductSchema.set('toObject', { virtuals: true });
 
 // Create and export the User model
 module.exports = mongoose.model("Product", ProductSchema);    
